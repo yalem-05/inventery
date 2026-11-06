@@ -51,3 +51,4 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ error: 'Failed to create user', details: error.message });
   }
 };
+

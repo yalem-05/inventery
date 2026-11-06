@@ -14,3 +14,4 @@ router.post('/', createUser); // POST /api/users
 router.get('/', authenticate, requireRole(['admin']), getUsers);
 
 export default router;
+
