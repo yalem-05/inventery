@@ -4,7 +4,11 @@ import { authenticate } from '../middlewares/auth.middleware';
 
 const router = Router();
 
+// Registration endpoints
 router.post('/register', register);
+router.post('/signup', register);
+
+// Login and Profile
 router.post('/login', login);
 router.get('/me', authenticate, getMe);
 
