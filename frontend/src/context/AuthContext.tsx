@@ -8,7 +8,9 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isStaff: boolean;
+  isCustomer: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -27,7 +29,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (storedToken && storedUser) {
         try {
           setUser(JSON.parse(storedUser));
-          // verify session with backend
           const res = await api.get('/auth/me');
           if (res.data?.user) {
             setUser(res.data.user);
@@ -55,6 +56,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('user', JSON.stringify(receivedUser));
   };
 
+  const register = async (name: string, email: string, password: string): Promise<void> => {
+    const response = await api.post('/auth/register', { name, email, password });
+    const { token: receivedToken, user: receivedUser } = response.data;
+
+    setToken(receivedToken);
+    setUser(receivedUser);
+
+    localStorage.setItem('token', receivedToken);
+    localStorage.setItem('user', JSON.stringify(receivedUser));
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -70,7 +82,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loading,
         isAdmin: user?.role === 'admin',
         isStaff: user?.role === 'staff' || user?.role === 'admin',
+        isCustomer: user?.role === 'customer',
         login,
+        register,
         logout,
       }}
     >
@@ -78,4 +92,3 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     </AuthContext.Provider>
   );
 };
-

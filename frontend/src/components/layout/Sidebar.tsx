@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, X } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, ShoppingBag, X } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -8,11 +9,20 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const navItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Products & Inventory', path: '/products', icon: Package },
-    { label: 'Orders Management', path: '/orders', icon: ShoppingCart },
-  ];
+  const { user } = useAuth();
+  const isCustomer = user?.role === 'customer';
+
+  // Navigation items based on role
+  const navItems = isCustomer
+    ? [
+        { label: 'Shop Catalog', path: '/products', icon: ShoppingBag },
+        { label: 'My Orders', path: '/orders', icon: ShoppingCart },
+      ]
+    : [
+        { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+        { label: 'Products & Inventory', path: '/products', icon: Package },
+        { label: 'Orders & Payments', path: '/orders', icon: ShoppingCart },
+      ];
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-slate-900 text-slate-300 w-64">
@@ -35,7 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       <div className="p-4 space-y-1 flex-1 overflow-y-auto">
         <p className="px-3 py-2 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-          Main Navigation
+          {isCustomer ? 'Customer Portal' : 'Main Navigation'}
         </p>
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -61,9 +71,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       <div className="p-4 border-t border-slate-800/80">
         <div className="bg-slate-800/50 rounded-lg p-3 text-xs text-slate-400 border border-slate-700/50">
-          <p className="font-semibold text-slate-300">Quick Helper</p>
+          <p className="font-semibold text-slate-300">
+            {isCustomer ? 'Payment Methods' : 'Quick Helper'}
+          </p>
           <p className="mt-1 text-[11px] leading-relaxed">
-            Staff can create orders and edit stock. Only Admins can delete inventory items.
+            {isCustomer
+              ? 'Pay via Telebirr, CBEBirr, or CBE Bank Transfer and submit your reference code.'
+              : 'Staff verifies customer Telebirr/CBE references before marking orders Paid.'}
           </p>
         </div>
       </div>

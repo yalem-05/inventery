@@ -1,6 +1,9 @@
 import { Request } from 'express';
 
-export type UserRole = 'admin' | 'staff';
+export type UserRole = 'admin' | 'staff' | 'customer';
+
+export type PaymentMethod = 'telebirr' | 'cbebirr' | 'cbe' | 'cash';
+export type PaymentStatus = 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
 
 export interface UserPayload {
   id: number;
@@ -41,11 +44,18 @@ export interface Order {
   order_number: string;
   customer_name: string;
   customer_email?: string;
+  customer_id?: number;
   status: OrderStatus;
+  payment_method: PaymentMethod;
+  payment_reference?: string;
+  payment_status: PaymentStatus;
+  verified_by?: number;
+  verified_by_name?: string;
+  verified_at?: string;
+  verification_notes?: string;
   total_amount: number;
   created_by?: number;
   created_at: string;
   updated_at: string;
   items?: OrderItem[];
 }
-

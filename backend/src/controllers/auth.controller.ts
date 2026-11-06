@@ -4,6 +4,51 @@ import { query } from '../config/db';
 import { signToken } from '../utils/jwt';
 import { AuthenticatedRequest } from '../types';
 
+export const register = async (req: Request, res: Response): Promise<void> => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    res.status(400).json({ error: 'Name, email, and password are required.' });
+    return;
+  }
+
+  try {
+    const existing = await query('SELECT id FROM users WHERE email = $1', [email.toLowerCase().trim()]);
+    if (existing.rows.length > 0) {
+      res.status(409).json({ error: 'An account with this email already exists.' });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    // Self-registered accounts are customers
+    const result = await query(
+      `INSERT INTO users (name, email, password_hash, role)
+       VALUES ($1, $2, $3, 'customer')
+       RETURNING id, name, email, role`,
+      [name.trim(), email.toLowerCase().trim(), passwordHash]
+    );
+
+    const newUser = result.rows[0];
+    const token = signToken({
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+      name: newUser.name,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Customer account registered successfully.',
+      token,
+      user: newUser,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Registration failed', details: error.message });
+  }
+};
+
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
 
@@ -55,4 +100,3 @@ export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<v
   }
   res.json({ success: true, user: req.user });
 };
-

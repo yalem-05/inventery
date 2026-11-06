@@ -164,27 +164,48 @@ inventery/
 
 ## 👥 Role Permissions Matrix
 
-| Feature | Admin Role | Staff Role |
-| :--- | :---: | :---: |
-| View Dashboard & Analytics | ✅ Full | ✅ Full |
-| View Products & Stock Levels | ✅ Full | ✅ Full |
-| Create / Edit Products | ✅ Full | ✅ Full |
-| **Delete Products** | ✅ **Allowed** | ❌ **Forbidden (403)** |
-| Create Orders & Reserve Stock | ✅ Full | ✅ Full |
-| Update Order Status (`new` ➔ `paid` ➔ `delivered`) | ✅ Full | ✅ Full |
+| Feature | Admin Role | Staff Role | Customer Role |
+| :--- | :---: | :---: | :---: |
+| View Dashboard & Analytics | ✅ Full | ✅ Full | ❌ Restricted |
+| View Products Catalog & Stock | ✅ Full | ✅ Full | ✅ Shop & Order |
+| Create / Edit Products | ✅ Full | ✅ Full | ❌ Restricted |
+| **Delete Products** | ✅ **Allowed** | ❌ **Forbidden (403)** | ❌ Restricted |
+| Place Orders & Select Payment (Telebirr/CBE) | ✅ Allowed | ✅ Allowed | ✅ Self-Service Portal |
+| Submit Payment Transaction Reference | ✅ Allowed | ✅ Allowed | ✅ Allowed |
+| **Verify Customer Payment** | ✅ **Allowed** | ✅ **Allowed** | ❌ Restricted |
+| Update Order Status (`new` ➔ `paid` ➔ `delivered`) | ✅ Full | ✅ Full | ❌ View Only |
 
 ---
 
-## 🔑 Default Test Credentials
+## 🇪🇹 Ethiopian Payment Integration (Telebirr, CBEBirr, CBE Bank)
 
-The database initialization script automatically creates two ready-to-test accounts:
+1. **Telebirr SuperApp**:
+   - Customers transfer funds to merchant phone number (`0911-23-45-67`).
+   - Customer submits the SMS confirmation transaction reference ID.
+2. **CBEBirr Mobile Money**:
+   - Customers transfer funds to merchant CBEBirr account (`0922-34-56-78`).
+   - Customer submits the CBEBirr transaction code.
+3. **Commercial Bank of Ethiopia (CBE Bank Transfer)**:
+   - Direct bank transfer or mobile banking transfer to CBE Account (`1000-1234-5678-9`).
+   - Customer submits the bank reference number (e.g. `FT...`).
+4. **Staff Verification Workflow**:
+   - Orders with submitted references appear with status **`Pending Payment Verification`**.
+   - Staff/Admin clicks **"Verify Payment"** in the order dashboard to confirm the funds.
+   - Verification marks payment status as **`Verified`** and automatically transitions the order to **`Paid`**!
 
-| Role | Email | Password | Permissions |
+---
+
+## 🔑 Default Test Credentials (3 Roles)
+
+The database initialization script automatically provisions ready-to-test accounts for all three roles:
+
+| Role | Email | Password | Access Scope |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@gmail.com` | `admin123` | Complete administrative access including deleting products |
-| **Staff** | `staff@gmail.com` | `staff123` | Operational access to create orders and update product inventory |
+| **Admin** | `admin@business.com` (or `admin@gmail.com`) | `admin123` | Full admin privileges (inventory deletion, metrics, verification) |
+| **Staff** | `staff@business.com` (or `staff@gmail.com`) | `staff123` | Operations, order fulfillment, Telebirr/CBE payment verification |
+| **Customer** | `customer@business.com` (or `customer@gmail.com`) | `customer123` | Self-service store catalog, order placement, reference submission |
 
-*(The login screen also provides 1-click credential autofill buttons for rapid testing.)*
+*(The login page provides 1-click credential autofill buttons for each of the three accounts.)*
 
 ---
 

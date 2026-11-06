@@ -1,4 +1,7 @@
-export type UserRole = 'admin' | 'staff';
+export type UserRole = 'admin' | 'staff' | 'customer';
+
+export type PaymentMethod = 'telebirr' | 'cbebirr' | 'cbe' | 'cash';
+export type PaymentStatus = 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
 
 export interface User {
   id: number;
@@ -43,7 +46,15 @@ export interface Order {
   order_number: string;
   customer_name: string;
   customer_email?: string;
+  customer_id?: number;
   status: OrderStatus;
+  payment_method: PaymentMethod;
+  payment_reference?: string;
+  payment_status: PaymentStatus;
+  verified_by?: number;
+  verified_by_name?: string;
+  verified_at?: string;
+  verification_notes?: string;
   total_amount: number | string;
   created_by_name?: string;
   created_at: string;
@@ -78,4 +89,3 @@ export interface DashboardData {
   topProducts: TopProduct[];
   lowStockAlerts: Product[];
 }
-

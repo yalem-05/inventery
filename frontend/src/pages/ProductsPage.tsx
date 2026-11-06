@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Product } from '../types';
 import { useAuth } from '../hooks/useAuth';
@@ -14,10 +15,13 @@ import {
   Trash2,
   AlertTriangle,
   Package,
+  ShoppingBag,
+  Download,
 } from 'lucide-react';
 
 export const ProductsPage: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isCustomer } = useAuth();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -116,6 +120,30 @@ export const ProductsPage: React.FC = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (products.length === 0) return;
+
+    const headers = ['Product Name', 'SKU', 'Category', 'Price ($)', 'Current Stock', 'Low Stock Threshold'];
+    const rows = products.map((p) => [
+      `"${p.name.replace(/"/g, '""')}"`,
+      `"${p.sku}"`,
+      `"${p.category}"`,
+      Number(p.price).toFixed(2),
+      p.stock,
+      p.low_stock_threshold,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `inventory_catalog_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const filteredProducts = products.filter(
     (p) =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -129,16 +157,41 @@ export const ProductsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-            Inventory & Products
+            {isCustomer ? 'Products Store Catalog' : 'Inventory & Products'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1">
-            Maintain stock levels, configure thresholds, and manage your catalog.
+            {isCustomer
+              ? 'Browse genuine in-stock items and pay via Telebirr, CBEBirr, or CBE Bank.'
+              : 'Maintain stock levels, configure thresholds, and manage your catalog.'}
           </p>
         </div>
-        <Button onClick={handleOpenCreateModal} variant="primary" className="w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" />
-          <span>Add New Product</span>
-        </Button>
+
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          {!isCustomer && (
+            <button
+              onClick={handleExportCSV}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center space-x-1.5 px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition-all"
+              title="Download CSV Catalog"
+            >
+              <Download className="w-4 h-4 text-slate-500" />
+              <span>Export CSV</span>
+            </button>
+          )}
+
+          {!isCustomer && (
+            <Button onClick={handleOpenCreateModal} variant="primary" className="flex-1 sm:flex-none">
+              <Plus className="w-4 h-4 mr-2" />
+              <span>Add New Product</span>
+            </Button>
+          )}
+
+          {isCustomer && (
+            <Button onClick={() => navigate('/orders')} variant="primary" className="w-full sm:w-auto">
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              <span>Checkout Order</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -154,17 +207,19 @@ export const ProductsPage: React.FC = () => {
           />
         </div>
 
-        <button
-          onClick={() => setFilterLowStock(!filterLowStock)}
-          className={`w-full sm:w-auto px-3 py-2 text-xs font-semibold rounded-lg border flex items-center justify-center space-x-2 transition-all ${
-            filterLowStock
-              ? 'bg-amber-500 text-white border-amber-600'
-              : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-          }`}
-        >
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>Low Stock Warning Only</span>
-        </button>
+        {!isCustomer && (
+          <button
+            onClick={() => setFilterLowStock(!filterLowStock)}
+            className={`w-full sm:w-auto px-3 py-2 text-xs font-semibold rounded-lg border flex items-center justify-center space-x-2 transition-all ${
+              filterLowStock
+                ? 'bg-amber-500 text-white border-amber-600'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Low Stock Warning Only</span>
+          </button>
+        )}
       </div>
 
       {/* Products Content: Desktop Table + Mobile Card View */}
@@ -175,11 +230,11 @@ export const ProductsPage: React.FC = () => {
           <div className="p-8 sm:p-12 text-center">
             <Package className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-slate-300 mb-2 sm:mb-3" />
             <p className="text-sm sm:text-base font-semibold text-slate-700">No products found</p>
-            <p className="text-xs text-slate-400 mt-1">Try adjusting your search or add a new product</p>
+            <p className="text-xs text-slate-400 mt-1">Try adjusting your search criteria</p>
           </div>
         ) : (
           <>
-            {/* Desktop Table View (>= 768px) */}
+            {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-600">
                 <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
@@ -217,33 +272,48 @@ export const ProductsPage: React.FC = () => {
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-2">
                             <span className="font-bold text-slate-800">{p.stock}</span>
-                            {isLow ? (
-                              <Badge variant="danger">
+                            {p.stock <= 0 ? (
+                              <Badge variant="danger">Out of Stock</Badge>
+                            ) : isLow ? (
+                              <Badge variant="warning">
                                 <AlertTriangle className="w-3 h-3 mr-1 inline" />
-                                Low Stock (&le; {p.low_stock_threshold})
+                                Low ({p.stock} left)
                               </Badge>
                             ) : (
-                              <Badge variant="success">Healthy</Badge>
+                              <Badge variant="success">Available</Badge>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right space-x-2">
-                          <button
-                            onClick={() => handleOpenEditModal(p)}
-                            className="p-1.5 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                            title="Edit product"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-
-                          {isAdmin && (
+                          {isCustomer ? (
                             <button
-                              onClick={() => handleDeleteProduct(p.id, p.name)}
-                              className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                              title="Delete product (Admin only)"
+                              onClick={() => navigate('/orders')}
+                              disabled={p.stock <= 0}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center space-x-1 ml-auto"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <ShoppingBag className="w-3.5 h-3.5" />
+                              <span>Order Now</span>
                             </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleOpenEditModal(p)}
+                                className="p-1.5 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                title="Edit product"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+
+                              {isAdmin && (
+                                <button
+                                  onClick={() => handleDeleteProduct(p.id, p.name)}
+                                  className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                  title="Delete product (Admin only)"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </>
                           )}
                         </td>
                       </tr>
@@ -253,7 +323,7 @@ export const ProductsPage: React.FC = () => {
               </table>
             </div>
 
-            {/* Mobile Card List View (< 768px, optimized for < 500px) */}
+            {/* Mobile Card List View */}
             <div className="block md:hidden divide-y divide-slate-100">
               {filteredProducts.map((p) => {
                 const isLow = p.stock <= p.low_stock_threshold;
@@ -280,35 +350,48 @@ export const ProductsPage: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         <span className="text-xs text-slate-500 font-medium">Stock:</span>
                         <span className="font-bold text-slate-900 text-sm">{p.stock}</span>
-                        {isLow ? (
-                          <Badge variant="danger" size="sm">
+                        {p.stock <= 0 ? (
+                          <Badge variant="danger" size="sm">Out of Stock</Badge>
+                        ) : isLow ? (
+                          <Badge variant="warning" size="sm">
                             <AlertTriangle className="w-3 h-3 mr-0.5 inline" />
-                            Low ({p.low_stock_threshold})
+                            Low ({p.stock})
                           </Badge>
                         ) : (
-                          <Badge variant="success" size="sm">Healthy</Badge>
+                          <Badge variant="success" size="sm">In Stock</Badge>
                         )}
                       </div>
 
-                      <div className="flex items-center space-x-1">
+                      {isCustomer ? (
                         <button
-                          onClick={() => handleOpenEditModal(p)}
-                          className="p-1.5 text-slate-600 hover:text-emerald-600 bg-slate-100 hover:bg-emerald-50 rounded-lg transition-colors text-xs flex items-center space-x-1"
-                          title="Edit product"
+                          onClick={() => navigate('/orders')}
+                          disabled={p.stock <= 0}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center space-x-1"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
-                          <span>Edit</span>
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Order Now</span>
                         </button>
-                        {isAdmin && (
+                      ) : (
+                        <div className="flex items-center space-x-1">
                           <button
-                            onClick={() => handleDeleteProduct(p.id, p.name)}
-                            className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors text-xs flex items-center space-x-1"
-                            title="Delete product"
+                            onClick={() => handleOpenEditModal(p)}
+                            className="p-1.5 text-slate-600 hover:text-emerald-600 bg-slate-100 hover:bg-emerald-50 rounded-lg transition-colors text-xs flex items-center space-x-1"
+                            title="Edit product"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Edit</span>
                           </button>
-                        )}
-                      </div>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDeleteProduct(p.id, p.name)}
+                              className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors text-xs flex items-center space-x-1"
+                              title="Delete product"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -318,101 +401,103 @@ export const ProductsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Create / Edit Modal (Mobile Responsive) */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingProduct ? 'Edit Inventory Item' : 'Add New Inventory Item'}
-        maxWidth="lg"
-      >
-        {modalError && (
-          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-medium">
-            {modalError}
-          </div>
-        )}
+      {/* Create / Edit Modal for Staff & Admin */}
+      {!isCustomer && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title={editingProduct ? 'Edit Inventory Item' : 'Add New Inventory Item'}
+          maxWidth="lg"
+        >
+          {modalError && (
+            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-medium">
+              {modalError}
+            </div>
+          )}
 
-        <form onSubmit={handleSaveProduct} className="space-y-3.5">
-          <Input
-            label="Product Name"
-            required
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="e.g. Wireless Ergonomic Mouse"
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <form onSubmit={handleSaveProduct} className="space-y-3.5">
             <Input
-              label="SKU Code"
+              label="Product Name"
               required
-              value={formData.sku}
-              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-              placeholder="SKU-1001"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g. Wireless Ergonomic Mouse"
             />
-            <Input
-              label="Category"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              placeholder="e.g. Electronics, Office"
-            />
-          </div>
 
-          <div className="grid grid-cols-1 xs:grid-cols-3 gap-3 sm:gap-4">
-            <Input
-              label="Price ($)"
-              type="number"
-              step="0.01"
-              required
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              placeholder="29.99"
-            />
-            <Input
-              label="Initial Stock"
-              type="number"
-              required
-              value={formData.stock}
-              onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-              placeholder="50"
-            />
-            <Input
-              label="Threshold"
-              type="number"
-              required
-              value={formData.low_stock_threshold}
-              onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
-              placeholder="10"
-              helperText="Alert triggered below this"
-            />
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <Input
+                label="SKU Code"
+                required
+                value={formData.sku}
+                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                placeholder="SKU-1001"
+              />
+              <Input
+                label="Category"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                placeholder="e.g. Electronics, Office"
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
-              Description (Optional)
-            </label>
-            <textarea
-              rows={2}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              placeholder="Add product specifications or notes..."
-            />
-          </div>
+            <div className="grid grid-cols-1 xs:grid-cols-3 gap-3 sm:gap-4">
+              <Input
+                label="Price ($)"
+                type="number"
+                step="0.01"
+                required
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                placeholder="29.99"
+              />
+              <Input
+                label="Initial Stock"
+                type="number"
+                required
+                value={formData.stock}
+                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                placeholder="50"
+              />
+              <Input
+                label="Threshold"
+                type="number"
+                required
+                value={formData.low_stock_threshold}
+                onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                placeholder="10"
+                helperText="Alert triggered below this"
+              />
+            </div>
 
-          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:space-x-3 pt-3 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsModalOpen(false)}
-              disabled={modalLoading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" isLoading={modalLoading}>
-              {editingProduct ? 'Save Changes' : 'Create Product'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                Description (Optional)
+              </label>
+              <textarea
+                rows={2}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="Add product specifications or notes..."
+              />
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:space-x-3 pt-3 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+                disabled={modalLoading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" isLoading={modalLoading}>
+                {editingProduct ? 'Save Changes' : 'Create Product'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };
