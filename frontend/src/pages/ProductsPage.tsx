@@ -124,25 +124,25 @@ export const ProductsPage: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
             Inventory & Products
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1">
             Maintain stock levels, configure thresholds, and manage your catalog.
           </p>
         </div>
-        <Button onClick={handleOpenCreateModal} variant="primary">
+        <Button onClick={handleOpenCreateModal} variant="primary" className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           <span>Add New Product</span>
         </Button>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
         <div className="relative w-full sm:w-96">
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
           <input
@@ -150,112 +150,175 @@ export const ProductsPage: React.FC = () => {
             placeholder="Search by name, SKU or category..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+            className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
           />
         </div>
 
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <button
-            onClick={() => setFilterLowStock(!filterLowStock)}
-            className={`px-3 py-2 text-xs font-semibold rounded-lg border flex items-center space-x-2 transition-all ${
-              filterLowStock
-                ? 'bg-amber-500 text-white border-amber-600'
-                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>Low Stock Warning Only</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setFilterLowStock(!filterLowStock)}
+          className={`w-full sm:w-auto px-3 py-2 text-xs font-semibold rounded-lg border flex items-center justify-center space-x-2 transition-all ${
+            filterLowStock
+              ? 'bg-amber-500 text-white border-amber-600'
+              : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+          }`}
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>Low Stock Warning Only</span>
+        </button>
       </div>
 
-      {/* Products Table */}
+      {/* Products Content: Desktop Table + Mobile Card View */}
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
         {loading ? (
           <LoadingSpinner message="Loading inventory items..." />
         ) : filteredProducts.length === 0 ? (
-          <div className="p-12 text-center">
-            <Package className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-semibold text-slate-700">No products found</p>
+          <div className="p-8 sm:p-12 text-center">
+            <Package className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-slate-300 mb-2 sm:mb-3" />
+            <p className="text-sm sm:text-base font-semibold text-slate-700">No products found</p>
             <p className="text-xs text-slate-400 mt-1">Try adjusting your search or add a new product</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-3.5">Product Name</th>
-                  <th className="px-6 py-3.5">SKU</th>
-                  <th className="px-6 py-3.5">Category</th>
-                  <th className="px-6 py-3.5">Price</th>
-                  <th className="px-6 py-3.5">Stock Level</th>
-                  <th className="px-6 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredProducts.map((p) => {
-                  const isLow = p.stock <= p.low_stock_threshold;
-                  return (
-                    <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-6 py-4 font-semibold text-slate-800">
-                        {p.name}
-                        {p.description && (
-                          <span className="block text-xs font-normal text-slate-400 truncate max-w-xs">
-                            {p.description}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 font-mono text-xs text-slate-600">{p.sku}</td>
-                      <td className="px-6 py-4">
-                        <span className="px-2.5 py-1 text-xs rounded-md bg-slate-100 text-slate-700 font-medium">
-                          {p.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-slate-900">
-                        ${Number(p.price).toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-bold text-slate-800">{p.stock}</span>
-                          {isLow ? (
-                            <Badge variant="danger">
-                              <AlertTriangle className="w-3 h-3 mr-1 inline" />
-                              Low Stock (&le; {p.low_stock_threshold})
-                            </Badge>
-                          ) : (
-                            <Badge variant="success">Healthy</Badge>
+          <>
+            {/* Desktop Table View (>= 768px) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-600">
+                <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-3.5">Product Name</th>
+                    <th className="px-6 py-3.5">SKU</th>
+                    <th className="px-6 py-3.5">Category</th>
+                    <th className="px-6 py-3.5">Price</th>
+                    <th className="px-6 py-3.5">Stock Level</th>
+                    <th className="px-6 py-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredProducts.map((p) => {
+                    const isLow = p.stock <= p.low_stock_threshold;
+                    return (
+                      <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-6 py-4 font-semibold text-slate-800">
+                          {p.name}
+                          {p.description && (
+                            <span className="block text-xs font-normal text-slate-400 truncate max-w-xs">
+                              {p.description}
+                            </span>
                           )}
+                        </td>
+                        <td className="px-6 py-4 font-mono text-xs text-slate-600">{p.sku}</td>
+                        <td className="px-6 py-4">
+                          <span className="px-2.5 py-1 text-xs rounded-md bg-slate-100 text-slate-700 font-medium">
+                            {p.category}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-slate-900">
+                          ${Number(p.price).toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-bold text-slate-800">{p.stock}</span>
+                            {isLow ? (
+                              <Badge variant="danger">
+                                <AlertTriangle className="w-3 h-3 mr-1 inline" />
+                                Low Stock (&le; {p.low_stock_threshold})
+                              </Badge>
+                            ) : (
+                              <Badge variant="success">Healthy</Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right space-x-2">
+                          <button
+                            onClick={() => handleOpenEditModal(p)}
+                            className="p-1.5 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="Edit product"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDeleteProduct(p.id, p.name)}
+                              className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                              title="Delete product (Admin only)"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View (< 768px, optimized for < 500px) */}
+            <div className="block md:hidden divide-y divide-slate-100">
+              {filteredProducts.map((p) => {
+                const isLow = p.stock <= p.low_stock_threshold;
+                return (
+                  <div key={p.id} className="p-4 space-y-3 hover:bg-slate-50/50 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-slate-900 text-sm leading-snug">{p.name}</h4>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                            {p.sku}
+                          </span>
+                          <span className="text-[11px] text-slate-500 font-medium">{p.category}</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-right space-x-2">
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-extrabold text-slate-900 text-base">
+                          ${Number(p.price).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-slate-500 font-medium">Stock:</span>
+                        <span className="font-bold text-slate-900 text-sm">{p.stock}</span>
+                        {isLow ? (
+                          <Badge variant="danger" size="sm">
+                            <AlertTriangle className="w-3 h-3 mr-0.5 inline" />
+                            Low ({p.low_stock_threshold})
+                          </Badge>
+                        ) : (
+                          <Badge variant="success" size="sm">Healthy</Badge>
+                        )}
+                      </div>
+
+                      <div className="flex items-center space-x-1">
                         <button
                           onClick={() => handleOpenEditModal(p)}
-                          className="p-1.5 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-600 hover:text-emerald-600 bg-slate-100 hover:bg-emerald-50 rounded-lg transition-colors text-xs flex items-center space-x-1"
                           title="Edit product"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
                         </button>
-
                         {isAdmin && (
                           <button
                             onClick={() => handleDeleteProduct(p.id, p.name)}
-                            className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            title="Delete product (Admin only)"
+                            className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors text-xs flex items-center space-x-1"
+                            title="Delete product"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
-      {/* Create / Edit Modal */}
+      {/* Create / Edit Modal (Mobile Responsive) */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -268,7 +331,7 @@ export const ProductsPage: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSaveProduct} className="space-y-4">
+        <form onSubmit={handleSaveProduct} className="space-y-3.5">
           <Input
             label="Product Name"
             required
@@ -277,7 +340,7 @@ export const ProductsPage: React.FC = () => {
             placeholder="e.g. Wireless Ergonomic Mouse"
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Input
               label="SKU Code"
               required
@@ -293,7 +356,7 @@ export const ProductsPage: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 xs:grid-cols-3 gap-3 sm:gap-4">
             <Input
               label="Price ($)"
               type="number"
@@ -312,7 +375,7 @@ export const ProductsPage: React.FC = () => {
               placeholder="50"
             />
             <Input
-              label="Low Stock Threshold"
+              label="Threshold"
               type="number"
               required
               value={formData.low_stock_threshold}
@@ -327,15 +390,15 @@ export const ProductsPage: React.FC = () => {
               Description (Optional)
             </label>
             <textarea
-              rows={3}
+              rows={2}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               placeholder="Add product specifications or notes..."
             />
           </div>
 
-          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:space-x-3 pt-3 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
@@ -353,4 +416,3 @@ export const ProductsPage: React.FC = () => {
     </div>
   );
 };
-
